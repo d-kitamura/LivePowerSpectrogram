@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Live Power Spectrogram</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Local microphone analyzer</p>
+          <h1>Live Power Spectrogram</h1>
+        </div>
+        <div class="status-pill" id="statusPill">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Idle</span>
+        </div>
+      </header>
+
+      <section class="controls" aria-label="Controls">
+        <button class="primary" id="startButton" type="button">Start mic</button>
+        <button id="stopButton" type="button" disabled>Stop</button>
+        <button id="resetButton" type="button">Reset</button>
+
+        <label class="control-field">
+          <span>FFT</span>
+          <select id="fftSizeSelect">
+            <option value="2048">2048</option>
+            <option value="4096" selected>4096</option>
+            <option value="8192">8192</option>
+          </select>
+        </label>
+
+        <label class="control-field">
+          <span>Range</span>
+          <select id="frequencyRangeSelect">
+            <option value="4000" selected>0-4 kHz</option>
+            <option value="8000">0-8 kHz</option>
+            <option value="12000">0-12 kHz</option>
+          </select>
+        </label>
+
+        <label class="control-field wide">
+          <span>Floor</span>
+          <input id="dbFloorSlider" type="range" min="-120" max="-45" value="-95" step="1" />
+          <strong id="dbFloorValue">-95 dB</strong>
+        </label>
+      </section>
+
+      <section class="meter-row" aria-label="Input meters">
+        <div class="meter-card">
+          <span class="metric-label">Input level</span>
+          <div class="meter-track">
+            <div class="meter-fill" id="levelMeter"></div>
+          </div>
+          <strong id="levelValue">-inf dBFS</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Time</span>
+          <strong id="timeValue">00:00.0</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Peak</span>
+          <strong id="peakValue">-- Hz</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Sample rate</span>
+          <strong id="sampleRateValue">--</strong>
+        </div>
+      </section>
+
+      <section class="visual-stack">
+        <article class="visual-panel waveform-panel">
+          <div class="panel-head">
+            <h2>Waveform</h2>
+            <span>12-second timeline</span>
+          </div>
+          <div class="waveform-layout">
+            <div class="amplitude-axis" aria-hidden="true">
+              <span>+1</span>
+              <span>0</span>
+              <span>-1</span>
+            </div>
+            <div class="canvas-frame waveform-frame">
+              <canvas id="waveformCanvas" aria-label="Live waveform"></canvas>
+            </div>
+          </div>
+        </article>
+
+        <article class="visual-panel spectrogram-panel">
+          <div class="panel-head">
+            <h2>Power spectrogram</h2>
+            <span id="spectrogramCaption">Hann, 4096 FFT, 0-4 kHz</span>
+          </div>
+          <div class="spectrogram-layout">
+            <div class="frequency-axis" aria-hidden="true">
+              <span id="axisTop">4 kHz</span>
+              <span id="axisMid">2 kHz</span>
+              <span>0</span>
+            </div>
+            <div class="canvas-frame spectrogram-frame">
+              <canvas id="spectrogramCanvas" aria-label="Live power spectrogram"></canvas>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
