@@ -50,7 +50,7 @@ let waveSampleCount = 0;
 let analysisQueue = new Float32Array(0);
 let analysisQueueLength = 0;
 let fftSize = Number(fftSizeSelect.value);
-let hopSize = fftSize / 4;
+let hopSize = fftSize / 8;
 let fft = null;
 let hannWindow = new Float32Array(0);
 let hannWindowSum = 0;
@@ -136,7 +136,7 @@ class FFT {
 
 function configureAnalysis() {
   fftSize = Number(fftSizeSelect.value);
-  hopSize = Math.max(256, fftSize / 4);
+  hopSize = fftSize / 8;
   fft = new FFT(fftSize);
   hannWindow = new Float32Array(fftSize);
   hannWindowSum = 0;

@@ -28,14 +28,22 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 * 経過時間の表示
 * FFTサイズの切り替え
 
+  * 512
+  * 1024
   * 2048
   * 4096
   * 8192
+  * 16384
+* シフト長は常に窓長（FFTサイズ）の1/8（オーバーラップ率87.5%）
 * 表示周波数範囲の切り替え
 
+  * 0–1 kHz
+  * 0–2 kHz
   * 0–4 kHz
   * 0–8 kHz
   * 0–12 kHz
+  * 0–16 kHz
+  * 0–20 kHz
 * スペクトログラムのdB表示下限値の調整
 * Hann窓を用いた周波数解析
 * 12秒間のスクロール表示
@@ -184,14 +192,22 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 * Elapsed time display
 * Selectable FFT sizes:
 
+  * 512
+  * 1024
   * 2048
   * 4096
   * 8192
+  * 16384
+* Hop size fixed at one eighth of the window length (FFT size), giving 87.5% overlap
 * Selectable frequency ranges:
 
+  * 0–1 kHz
+  * 0–2 kHz
   * 0–4 kHz
   * 0–8 kHz
   * 0–12 kHz
+  * 0–16 kHz
+  * 0–20 kHz
 * Adjustable dB floor for spectrogram visualization
 * Frequency analysis using a Hann window
 * 12-second scrolling timeline
