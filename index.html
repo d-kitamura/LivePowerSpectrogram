@@ -42,6 +42,12 @@
           </select>
         </label>
 
+        <label class="control-field wide" title="Input gain applied to the waveform, spectrogram, and input level. 0 dB leaves the signal unchanged.">
+          <span>Gain</span>
+          <input id="inputGainSlider" type="range" min="-30" max="40" value="0" step="1" aria-label="Input gain" aria-valuetext="0 dB" />
+          <strong id="inputGainValue">0 dB</strong>
+        </label>
+
         <label class="control-field wide">
           <span>Floor</span>
           <input id="dbFloorSlider" type="range" min="-120" max="-45" value="-95" step="1" />

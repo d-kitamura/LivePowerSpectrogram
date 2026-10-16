@@ -5,6 +5,8 @@ const stopButton = document.getElementById("stopButton");
 const resetButton = document.getElementById("resetButton");
 const fftSizeSelect = document.getElementById("fftSizeSelect");
 const frequencyRangeSelect = document.getElementById("frequencyRangeSelect");
+const inputGainSlider = document.getElementById("inputGainSlider");
+const inputGainValue = document.getElementById("inputGainValue");
 const dbFloorSlider = document.getElementById("dbFloorSlider");
 const dbFloorValue = document.getElementById("dbFloorValue");
 const statusPill = document.getElementById("statusPill");
@@ -34,6 +36,7 @@ const SPECTROGRAM_MAX_DB = 0;
 let audioContext = null;
 let mediaStream = null;
 let sourceNode = null;
+let inputGainNode = null;
 let processorNode = null;
 let silentGain = null;
 let isRecording = false;
@@ -52,6 +55,7 @@ let fft = null;
 let hannWindow = new Float32Array(0);
 let hannWindowSum = 0;
 let maxFrequency = Number(frequencyRangeSelect.value);
+let inputGainDb = Number(inputGainSlider.value);
 let dbFloor = Number(dbFloorSlider.value);
 let waveformX = 0;
 let spectrogramX = 0;
@@ -258,6 +262,22 @@ function handleAudioProcess(event) {
   updateInputLevel(samples);
 }
 
+function updateInputGain() {
+  inputGainDb = Number(inputGainSlider.value);
+  const label = `${inputGainDb > 0 ? "+" : ""}${inputGainDb} dB`;
+  inputGainValue.textContent = label;
+  inputGainSlider.setAttribute("aria-valuetext", label);
+
+  if (inputGainNode && audioContext) {
+    // Smooth live changes to avoid abrupt steps in the analyzed signal.
+    inputGainNode.gain.setTargetAtTime(
+      10 ** (inputGainDb / 20),
+      audioContext.currentTime,
+      0.015
+    );
+  }
+}
+
 function updateInputLevel(samples) {
   let sumSquares = 0;
   let peak = 0;
@@ -304,12 +324,15 @@ async function startRecording() {
     audioContext = new AudioContext({ latencyHint: "interactive" });
     sampleRate = audioContext.sampleRate;
     sourceNode = audioContext.createMediaStreamSource(mediaStream);
+    inputGainNode = audioContext.createGain();
+    inputGainNode.gain.value = 10 ** (inputGainDb / 20);
     processorNode = audioContext.createScriptProcessor(PROCESSOR_SIZE, 1, 1);
     silentGain = audioContext.createGain();
     silentGain.gain.value = 0;
     processorNode.onaudioprocess = handleAudioProcess;
 
-    sourceNode.connect(processorNode);
+    sourceNode.connect(inputGainNode);
+    inputGainNode.connect(processorNode);
     processorNode.connect(silentGain);
     silentGain.connect(audioContext.destination);
 
@@ -351,6 +374,7 @@ function stopRecording() {
     processorNode.onaudioprocess = null;
   }
   if (sourceNode) sourceNode.disconnect();
+  if (inputGainNode) inputGainNode.disconnect();
   if (silentGain) silentGain.disconnect();
   if (mediaStream) {
     mediaStream.getTracks().forEach((track) => track.stop());
@@ -362,6 +386,7 @@ function stopRecording() {
   audioContext = null;
   mediaStream = null;
   sourceNode = null;
+  inputGainNode = null;
   processorNode = null;
   silentGain = null;
   setStatus(recordedSampleCount > 0 ? "Stopped" : "Idle", false);
@@ -736,6 +761,8 @@ frequencyRangeSelect.addEventListener("change", () => {
   drawTimeAxis(spectrogramCanvas, spectrogramCtx);
 });
 
+inputGainSlider.addEventListener("input", updateInputGain);
+
 dbFloorSlider.addEventListener("input", () => {
   dbFloor = Number(dbFloorSlider.value);
   dbFloorValue.textContent = `${dbFloor} dB`;
@@ -749,6 +776,7 @@ window.addEventListener("resize", () => {
 
 window.addEventListener("beforeunload", stopRecording);
 
+updateInputGain();
 configureAnalysis();
 resizeCanvas(waveformCanvas, waveformCtx, PLOT_BACKGROUND);
 resizeCanvas(spectrogramCanvas, spectrogramCtx, PLOT_BACKGROUND);
