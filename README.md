@@ -19,6 +19,7 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 ## 主な機能
 
 * マイク入力によるリアルタイム音声解析
+* 入力ゲインの調整（−30〜+40 dB，1 dB刻み）
 * 時間波形のリアルタイム表示
 * パワースペクトログラムのリアルタイム表示
 * 入力レベルの表示
@@ -60,8 +61,13 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 4. マイクに向かって声を出したり，楽器音や環境音を入力したりします。
 5. 上段の波形表示で，音圧波形の時間変化を確認します。
 6. 下段のパワースペクトログラムで，周波数成分の時間変化を確認します。
-7. 必要に応じて，FFTサイズ，表示周波数範囲，dB床値を調整します。
+7. 必要に応じて，`Gain`（入力ゲイン），FFTサイズ，表示周波数範囲，dB床値を調整します。
 8. `Stop` でマイク入力を停止し，`Reset` で表示をリセットできます。
+
+`Gain` の初期値は0 dB（変更なし）です。感度の弱いマイクは正の値でブーストし，大きすぎる入力は負の値でカットできます。
+例えば，+20 dBで振幅は10倍，−20 dBで1/10になります。録音中も変更でき，変更後の波形・スペクトログラム・入力レベルに反映されます。
+停止・再開や `Reset` ではゲイン設定を保持します。ページを再読み込みすると0 dBに戻ります。
+これはブラウザ内のソフトウェアゲインで，マイク本体やOSの入力設定は変更しません。ノイズも一緒に増幅されるため，波形が表示範囲を超える場合はゲインを下げてください。
 
 ## 教育での利用例
 
@@ -169,6 +175,7 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 ## Features
 
 * Real-time audio analysis using microphone input
+* Adjustable input gain (−30 to +40 dB in 1 dB steps)
 * Real-time waveform display
 * Real-time power spectrogram display
 * Input level display
@@ -210,8 +217,13 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 4. Speak, sing, play an instrument, or input environmental sound into the microphone.
 5. Observe the time-domain waveform in the upper display.
 6. Observe the time-varying frequency components in the power spectrogram.
-7. Adjust the FFT size, frequency range, and dB floor as needed.
+7. Adjust `Gain` (input gain), FFT size, frequency range, and dB floor as needed.
 8. Press `Stop` to stop microphone input, and `Reset` to clear the display.
+
+`Gain` defaults to 0 dB (unchanged). Use positive values to boost a quiet microphone and negative values to cut a loud input.
+For example, +20 dB multiplies the amplitude by 10, while −20 dB divides it by 10. Changes can be made while recording and apply to subsequent waveform, spectrogram, and input-level updates.
+The setting is retained across stop/start and `Reset`; reloading the page restores 0 dB.
+This is software gain in the browser; it does not change the microphone hardware or OS input settings. Noise is also amplified, so reduce the gain if the waveform exceeds the display range.
 
 ## Educational Examples
 

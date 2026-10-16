@@ -102,7 +102,7 @@ h2 {
 
 .controls {
   display: grid;
-  grid-template-columns: repeat(3, max-content) minmax(126px, 150px) minmax(138px, 160px) minmax(230px, 1fr);
+  grid-template-columns: repeat(3, max-content) minmax(126px, 150px) minmax(138px, 160px) repeat(2, minmax(230px, 1fr));
   gap: 10px;
   align-items: center;
   padding: 12px;
@@ -184,12 +184,14 @@ button.primary:hover:not(:disabled) {
 }
 
 .control-field input {
+  width: 100%;
   min-width: 90px;
   accent-color: var(--accent);
 }
 
 .control-field strong {
   font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
@@ -326,14 +328,18 @@ canvas {
   height: 100%;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1180px) {
   .controls {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .controls > button {
+    grid-column: span 2;
   }
 
   .control-field,
   .control-field.wide {
-    grid-column: span 2;
+    grid-column: span 3;
   }
 
   .meter-row {
@@ -364,6 +370,10 @@ canvas {
   button {
     min-width: 0;
     padding: 0 10px;
+  }
+
+  .controls > button {
+    grid-column: auto;
   }
 
   .control-field,
