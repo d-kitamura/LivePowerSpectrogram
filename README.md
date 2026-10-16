@@ -45,7 +45,7 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
   * 0–16 kHz
   * 0–20 kHz
 * スペクトログラムのdB表示下限値の調整
-* Hann窓を用いた周波数解析
+* 窓関数の切り替え：矩形窓，Hann窓，Hamming窓（デフォルト），Kaiser窓（β=8.6），Blackman窓
 * 12秒間のスクロール表示
 * ブラウザだけで動作する軽量な実装
 
@@ -69,13 +69,17 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 4. マイクに向かって声を出したり，楽器音や環境音を入力したりします。
 5. 上段の波形表示で，音圧波形の時間変化を確認します。
 6. 下段のパワースペクトログラムで，周波数成分の時間変化を確認します。
-7. 必要に応じて，`Gain`（入力ゲイン），FFTサイズ，表示周波数範囲，dB床値を調整します。
+7. 必要に応じて，`Gain`（入力ゲイン），FFTサイズ，`Window`（窓関数），表示周波数範囲，dB床値を調整します。
 8. `Stop` でマイク入力を停止し，`Reset` で表示をリセットできます。
 
 `Gain` の初期値は0 dB（変更なし）です。感度の弱いマイクは正の値でブーストし，大きすぎる入力は負の値でカットできます。
 例えば，+20 dBで振幅は10倍，−20 dBで1/10になります。録音中も変更でき，変更後の波形・スペクトログラム・入力レベルに反映されます。
 停止・再開や `Reset` ではゲイン設定を保持します。ページを再読み込みすると0 dBに戻ります。
 これはブラウザ内のソフトウェアゲインで，マイク本体やOSの入力設定は変更しません。ノイズも一緒に増幅されるため，波形が表示範囲を超える場合はゲインを下げてください。
+
+`Window` の初期値はHamming（ハミング窓）です。Rectangular（矩形窓），Hann，Kaiser（カイザー窓，β=8.6），Blackman（ブラックマン窓）も選択できます。
+窓関数は録音中も変更でき，変更時にはスペクトログラムをクリアして新しい窓で解析を続けます。シフト長はどの窓でもFFTサイズの1/8です。
+窓の係数の合計で振幅を補正し，窓による正弦波のレベル差を抑えています。窓関数は周波数解析に適用され，波形表示と入力レベルには影響しません。
 
 ## 教育での利用例
 
@@ -209,7 +213,7 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
   * 0–16 kHz
   * 0–20 kHz
 * Adjustable dB floor for spectrogram visualization
-* Frequency analysis using a Hann window
+* Selectable windows: Rectangular, Hann, Hamming (default), Kaiser (β=8.6), and Blackman
 * 12-second scrolling timeline
 * Lightweight browser-only implementation
 
@@ -233,13 +237,17 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 4. Speak, sing, play an instrument, or input environmental sound into the microphone.
 5. Observe the time-domain waveform in the upper display.
 6. Observe the time-varying frequency components in the power spectrogram.
-7. Adjust `Gain` (input gain), FFT size, frequency range, and dB floor as needed.
+7. Adjust `Gain` (input gain), FFT size, `Window` (window function), frequency range, and dB floor as needed.
 8. Press `Stop` to stop microphone input, and `Reset` to clear the display.
 
 `Gain` defaults to 0 dB (unchanged). Use positive values to boost a quiet microphone and negative values to cut a loud input.
 For example, +20 dB multiplies the amplitude by 10, while −20 dB divides it by 10. Changes can be made while recording and apply to subsequent waveform, spectrogram, and input-level updates.
 The setting is retained across stop/start and `Reset`; reloading the page restores 0 dB.
 This is software gain in the browser; it does not change the microphone hardware or OS input settings. Noise is also amplified, so reduce the gain if the waveform exceeds the display range.
+
+`Window` defaults to Hamming. Rectangular, Hann, Kaiser (β=8.6), and Blackman are also available.
+Windows can be changed while recording; switching clears the spectrogram and continues analysis with the new window. The hop size remains one eighth of the FFT size for every window.
+Amplitude is normalized by the sum of the window coefficients to reduce differences in sinusoidal levels between windows. Windowing applies to frequency analysis and does not affect the waveform or input-level meter.
 
 ## Educational Examples
 

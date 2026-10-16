@@ -37,6 +37,17 @@
         </label>
 
         <label class="control-field">
+          <span>Window</span>
+          <select id="windowFunctionSelect">
+            <option value="rectangular">Rectangular</option>
+            <option value="hann">Hann</option>
+            <option value="hamming" selected>Hamming</option>
+            <option value="kaiser">Kaiser (β=8.6)</option>
+            <option value="blackman">Blackman</option>
+          </select>
+        </label>
+
+        <label class="control-field">
           <span>Range</span>
           <select id="frequencyRangeSelect">
             <option value="1000">0-1 kHz</option>
@@ -105,7 +116,7 @@
         <article class="visual-panel spectrogram-panel">
           <div class="panel-head">
             <h2>Power spectrogram</h2>
-            <span id="spectrogramCaption">Hann, 4096 FFT, 0-4 kHz</span>
+            <span id="spectrogramCaption">Hamming, 4096 FFT, 0-4 kHz</span>
           </div>
           <div class="spectrogram-layout">
             <div class="frequency-axis" aria-hidden="true">

@@ -102,7 +102,7 @@ h2 {
 
 .controls {
   display: grid;
-  grid-template-columns: repeat(3, max-content) minmax(126px, 150px) minmax(138px, 160px) repeat(2, minmax(230px, 1fr));
+  grid-template-columns: repeat(3, max-content) minmax(126px, 150px) minmax(230px, 250px) minmax(138px, 160px) repeat(2, minmax(230px, 1fr));
   gap: 10px;
   align-items: center;
   padding: 12px;
@@ -328,7 +328,7 @@ canvas {
   height: 100%;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1400px) {
   .controls {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -337,17 +337,28 @@ canvas {
     grid-column: span 2;
   }
 
-  .control-field,
+  .control-field {
+    grid-column: span 2;
+  }
+
   .control-field.wide {
     grid-column: span 3;
   }
+}
 
+@media (max-width: 1180px) {
   .meter-row {
     grid-template-columns: repeat(2, 1fr);
   }
 
   .meter-card {
     grid-column: span 2;
+  }
+}
+
+@media (max-width: 800px) {
+  .control-field {
+    grid-column: span 3;
   }
 }
 

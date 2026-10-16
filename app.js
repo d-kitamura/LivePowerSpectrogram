@@ -4,6 +4,7 @@ const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
 const resetButton = document.getElementById("resetButton");
 const fftSizeSelect = document.getElementById("fftSizeSelect");
+const windowFunctionSelect = document.getElementById("windowFunctionSelect");
 const frequencyRangeSelect = document.getElementById("frequencyRangeSelect");
 const inputGainSlider = document.getElementById("inputGainSlider");
 const inputGainValue = document.getElementById("inputGainValue");
@@ -32,6 +33,7 @@ const AXIS_BACKGROUND = "#0b0f0f";
 const PROCESSOR_SIZE = 2048;
 const DEFAULT_SAMPLE_RATE = 48000;
 const SPECTROGRAM_MAX_DB = 0;
+const KAISER_BETA = 8.6;
 
 let audioContext = null;
 let mediaStream = null;
@@ -52,8 +54,8 @@ let analysisQueueLength = 0;
 let fftSize = Number(fftSizeSelect.value);
 let hopSize = fftSize / 8;
 let fft = null;
-let hannWindow = new Float32Array(0);
-let hannWindowSum = 0;
+let analysisWindow = new Float32Array(0);
+let analysisWindowSum = 0;
 let maxFrequency = Number(frequencyRangeSelect.value);
 let inputGainDb = Number(inputGainSlider.value);
 let dbFloor = Number(dbFloorSlider.value);
@@ -134,18 +136,64 @@ class FFT {
   }
 }
 
+function besselI0(value) {
+  const squaredQuarter = (value * value) / 4;
+  let sum = 1;
+  let term = 1;
+
+  // Convergent power series for the Kaiser window's modified Bessel function.
+  for (let order = 1; order <= 50; order += 1) {
+    term *= squaredQuarter / (order * order);
+    sum += term;
+    if (term < sum * 1e-12) break;
+  }
+
+  return sum;
+}
+
+function createAnalysisWindow(size, type) {
+  const coefficients = new Float32Array(size);
+  const kaiserScale = type === "kaiser" ? besselI0(KAISER_BETA) : 1;
+
+  // Symmetric windows: both endpoints belong to the selected FFT frame.
+  for (let i = 0; i < size; i += 1) {
+    const position = i / (size - 1);
+    const angle = 2 * Math.PI * position;
+
+    switch (type) {
+      case "rectangular":
+        coefficients[i] = 1;
+        break;
+      case "hann":
+        coefficients[i] = 0.5 * (1 - Math.cos(angle));
+        break;
+      case "hamming":
+        coefficients[i] = 0.54 - 0.46 * Math.cos(angle);
+        break;
+      case "kaiser": {
+        const centeredPosition = 2 * position - 1;
+        coefficients[i] =
+          besselI0(KAISER_BETA * Math.sqrt(Math.max(0, 1 - centeredPosition ** 2))) /
+          kaiserScale;
+        break;
+      }
+      case "blackman":
+        coefficients[i] = 0.42 - 0.5 * Math.cos(angle) + 0.08 * Math.cos(2 * angle);
+        break;
+      default:
+        throw new Error(`Unknown window function: ${type}`);
+    }
+  }
+
+  return coefficients;
+}
+
 function configureAnalysis() {
   fftSize = Number(fftSizeSelect.value);
   hopSize = fftSize / 8;
   fft = new FFT(fftSize);
-  hannWindow = new Float32Array(fftSize);
-  hannWindowSum = 0;
-
-  for (let i = 0; i < fftSize; i += 1) {
-    const value = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (fftSize - 1)));
-    hannWindow[i] = value;
-    hannWindowSum += value;
-  }
+  analysisWindow = createAnalysisWindow(fftSize, windowFunctionSelect.value);
+  analysisWindowSum = analysisWindow.reduce((sum, value) => sum + value, 0);
 
   analysisQueue = new Float32Array(fftSize * 3);
   analysisQueueLength = 0;
@@ -187,7 +235,7 @@ function processSpectrumFrame(frame) {
   const imag = new Float32Array(fftSize);
 
   for (let i = 0; i < fftSize; i += 1) {
-    real[i] = frame[i] * hannWindow[i];
+    real[i] = frame[i] * analysisWindow[i];
   }
 
   fft.transform(real, imag);
@@ -205,7 +253,7 @@ function processSpectrumFrame(frame) {
   for (let bin = 0; bin <= maxBin; bin += 1) {
     const amplitude =
       ((bin === 0 ? 1 : 2) * Math.hypot(real[bin], imag[bin])) /
-      hannWindowSum;
+      analysisWindowSum;
     const power = amplitude * amplitude;
     const db = 10 * Math.log10(power + 1e-24);
     dbValues[bin] = db;
@@ -722,7 +770,8 @@ function updateLabels() {
   const rangeKhz = displayMaxFrequency / 1000;
   axisTop.textContent = `${formatKhz(rangeKhz)} kHz`;
   axisMid.textContent = `${formatKhz(rangeKhz / 2)} kHz`;
-  spectrogramCaption.textContent = `Hann, ${fftSize} FFT, 0-${formatKhz(
+  const windowLabel = windowFunctionSelect.selectedOptions[0].textContent;
+  spectrogramCaption.textContent = `${windowLabel}, ${fftSize} FFT, 0-${formatKhz(
     rangeKhz
   )} kHz`;
   dbFloorValue.textContent = `${dbFloor} dB`;
@@ -744,13 +793,16 @@ startButton.addEventListener("click", startRecording);
 stopButton.addEventListener("click", stopRecording);
 resetButton.addEventListener("click", resetRecording);
 
-fftSizeSelect.addEventListener("change", () => {
+function handleAnalysisChange() {
   configureAnalysis();
   clearCanvas(spectrogramCanvas, spectrogramCtx, PLOT_BACKGROUND);
   spectrogramX = 0;
   spectrogramPixelCarry = 0;
   drawTimeAxis(spectrogramCanvas, spectrogramCtx);
-});
+}
+
+fftSizeSelect.addEventListener("change", handleAnalysisChange);
+windowFunctionSelect.addEventListener("change", handleAnalysisChange);
 
 frequencyRangeSelect.addEventListener("change", () => {
   maxFrequency = Number(frequencyRangeSelect.value);
