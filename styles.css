@@ -189,6 +189,10 @@ button.primary:hover:not(:disabled) {
   accent-color: var(--accent);
 }
 
+.control-field:has(input:disabled) {
+  opacity: 0.5;
+}
+
 .control-field strong {
   font-size: 0.86rem;
   font-variant-numeric: tabular-nums;
@@ -273,6 +277,51 @@ button.primary:hover:not(:disabled) {
   font-size: 0.86rem;
   font-weight: 650;
   text-align: right;
+}
+
+.spectrogram-head {
+  flex-wrap: wrap;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.spectrogram-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.spectrogram-scale {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.spectrogram-scale > span {
+  flex-shrink: 0;
+}
+
+.color-scale {
+  width: min(360px, 100%);
+  min-width: 0;
+}
+
+#colorScaleCanvas {
+  height: 12px;
+  border-radius: 3px;
+}
+
+.color-scale-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
 }
 
 .canvas-frame {

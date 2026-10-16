@@ -5,6 +5,7 @@ const stopButton = document.getElementById("stopButton");
 const resetButton = document.getElementById("resetButton");
 const fftSizeSelect = document.getElementById("fftSizeSelect");
 const windowFunctionSelect = document.getElementById("windowFunctionSelect");
+const spectrogramModeSelect = document.getElementById("spectrogramModeSelect");
 const frequencyRangeSelect = document.getElementById("frequencyRangeSelect");
 const inputGainSlider = document.getElementById("inputGainSlider");
 const inputGainValue = document.getElementById("inputGainValue");
@@ -18,6 +19,10 @@ const timeValue = document.getElementById("timeValue");
 const peakValue = document.getElementById("peakValue");
 const sampleRateValue = document.getElementById("sampleRateValue");
 const spectrogramCaption = document.getElementById("spectrogramCaption");
+const spectrogramTitle = document.getElementById("spectrogramTitle");
+const colorScaleLabel = document.getElementById("colorScaleLabel");
+const colorScaleCanvas = document.getElementById("colorScaleCanvas");
+const colorScaleTicks = document.getElementById("colorScaleTicks");
 const axisTop = document.getElementById("axisTop");
 const axisMid = document.getElementById("axisMid");
 const waveformCanvas = document.getElementById("waveformCanvas");
@@ -25,6 +30,7 @@ const spectrogramCanvas = document.getElementById("spectrogramCanvas");
 
 const waveformCtx = waveformCanvas.getContext("2d", { alpha: false });
 const spectrogramCtx = spectrogramCanvas.getContext("2d", { alpha: false });
+const colorScaleCtx = colorScaleCanvas.getContext("2d", { alpha: false });
 
 const DISPLAY_SECONDS = 12;
 const TIME_AXIS_HEIGHT = 30;
@@ -34,6 +40,7 @@ const PROCESSOR_SIZE = 2048;
 const DEFAULT_SAMPLE_RATE = 48000;
 const SPECTROGRAM_MAX_DB = 0;
 const KAISER_BETA = 8.6;
+const TWO_PI = 2 * Math.PI;
 
 let audioContext = null;
 let mediaStream = null;
@@ -59,6 +66,7 @@ let analysisWindowSum = 0;
 let maxFrequency = Number(frequencyRangeSelect.value);
 let inputGainDb = Number(inputGainSlider.value);
 let dbFloor = Number(dbFloorSlider.value);
+let spectrogramMode = spectrogramModeSelect.value;
 let waveformX = 0;
 let spectrogramX = 0;
 let waveformPixelCarry = 0;
@@ -246,7 +254,10 @@ function processSpectrumFrame(frame) {
     1,
     Math.min(Math.floor((cappedMaxFrequency / sampleRate) * fftSize), fftSize / 2)
   );
-  const dbValues = new Float32Array(maxBin + 1);
+  const isPhase = spectrogramMode === "phase";
+  const spectrumValues = isPhase
+    ? new Float64Array(maxBin + 1)
+    : new Float32Array(maxBin + 1);
   let strongestDb = -Infinity;
   let strongestBin = 0;
 
@@ -256,7 +267,14 @@ function processSpectrumFrame(frame) {
       analysisWindowSum;
     const power = amplitude * amplitude;
     const db = 10 * Math.log10(power + 1e-24);
-    dbValues[bin] = db;
+    // Phase is undefined for a zero-magnitude bin; render it as background.
+    if (isPhase) {
+      spectrumValues[bin] = real[bin] === 0 && imag[bin] === 0
+        ? NaN
+        : wrapPhase(Math.atan2(imag[bin], real[bin]));
+    } else {
+      spectrumValues[bin] = db;
+    }
 
     if (bin > 0 && db > strongestDb) {
       strongestDb = db;
@@ -265,7 +283,7 @@ function processSpectrumFrame(frame) {
   }
 
   latestPeakFrequency = (strongestBin * sampleRate) / fftSize;
-  drawSpectrogramColumn(dbValues);
+  drawSpectrogramColumn(spectrumValues);
 }
 
 function appendWaveSamples(samples) {
@@ -576,10 +594,10 @@ function clearPlotArea(canvas, context, fillStyle) {
   context.fillRect(0, 0, canvas.width, plotHeight);
 }
 
-function drawSpectrogramColumn(dbValues) {
+function drawSpectrogramColumn(spectrumValues) {
   const width = spectrogramCanvas.width;
   const plotHeight = getPlotHeight(spectrogramCanvas);
-  if (!width || !plotHeight || dbValues.length === 0) return;
+  if (!width || !plotHeight || spectrumValues.length === 0) return;
 
   spectrogramPixelCarry += (hopSize / sampleRate) * (width / DISPLAY_SECONDS);
   let columns = Math.floor(spectrogramPixelCarry);
@@ -597,12 +615,13 @@ function drawSpectrogramColumn(dbValues) {
   spectrogramX = Math.min(width, startX + columns);
 
   const imageData = spectrogramCtx.createImageData(columns, plotHeight);
-  const maxIndex = dbValues.length - 1;
+  const maxIndex = spectrumValues.length - 1;
+  const colorForValue = spectrogramMode === "phase" ? phaseColor : powerColor;
 
   for (let y = 0; y < plotHeight; y += 1) {
     const ratio = 1 - y / Math.max(1, plotHeight - 1);
     const bin = Math.min(maxIndex, Math.round(ratio * maxIndex));
-    const [red, green, blue] = powerColor(dbValues[bin]);
+    const [red, green, blue] = colorForValue(spectrumValues[bin]);
 
     for (let x = 0; x < columns; x += 1) {
       const offset = (y * columns + x) * 4;
@@ -642,6 +661,49 @@ function powerColor(db) {
   }
 
   return [190, 38, 45];
+}
+
+function wrapPhase(phase) {
+  return ((phase % TWO_PI) + TWO_PI) % TWO_PI;
+}
+
+function phaseColor(phase) {
+  if (!Number.isFinite(phase)) return [16, 21, 20];
+
+  const angle = wrapPhase(phase);
+  // Smooth cyclic RGB palette: the color and its slope agree at 0 and 2π.
+  return [0, TWO_PI / 3, (2 * TWO_PI) / 3].map((offset) =>
+    Math.round(127.5 * (1 + Math.cos(angle - offset)))
+  );
+}
+
+function updateColorScale() {
+  const isPhase = spectrogramMode === "phase";
+  const { width, height } = colorScaleCanvas;
+  for (let x = 0; x < width; x += 1) {
+    const fraction = x / (width - 1);
+    const color = isPhase
+      ? phaseColor(fraction * TWO_PI)
+      : powerColor(dbFloor + fraction * (SPECTROGRAM_MAX_DB - dbFloor));
+    colorScaleCtx.fillStyle = `rgb(${color.join(",")})`;
+    colorScaleCtx.fillRect(x, 0, 1, height);
+  }
+
+  colorScaleLabel.textContent = isPhase ? "Phase (rad)" : "Power (dB)";
+  const phaseTicks = ["0", "π/2", "π", "3π/2", "2π"];
+  Array.from(colorScaleTicks.children).forEach((tick, index) => {
+    tick.textContent = isPhase
+      ? phaseTicks[index]
+      : String(Number(
+          (dbFloor + (index / 4) * (SPECTROGRAM_MAX_DB - dbFloor)).toFixed(1)
+        ));
+  });
+  colorScaleCanvas.setAttribute(
+    "aria-label",
+    isPhase
+      ? "Phase color scale: 0 to 2π radians; 0 and 2π have the same color"
+      : `Power color scale: ${dbFloor} to ${SPECTROGRAM_MAX_DB} dB`
+  );
 }
 
 function resizeCanvas(canvas, context, fillStyle) {
@@ -774,7 +836,14 @@ function updateLabels() {
   spectrogramCaption.textContent = `${windowLabel}, ${fftSize} FFT, 0-${formatKhz(
     rangeKhz
   )} kHz`;
-  dbFloorValue.textContent = `${dbFloor} dB`;
+  const isPhase = spectrogramMode === "phase";
+  spectrogramTitle.textContent = isPhase ? "Phase spectrogram" : "Power spectrogram";
+  spectrogramCanvas.setAttribute(
+    "aria-label", isPhase ? "Live phase spectrogram" : "Live power spectrogram"
+  );
+  dbFloorSlider.disabled = isPhase;
+  dbFloorValue.textContent = isPhase ? "—" : `${dbFloor} dB`;
+  updateColorScale();
 }
 
 function formatKhz(value) {
@@ -793,31 +862,39 @@ startButton.addEventListener("click", startRecording);
 stopButton.addEventListener("click", stopRecording);
 resetButton.addEventListener("click", resetRecording);
 
-function handleAnalysisChange() {
-  configureAnalysis();
+function clearSpectrogram() {
   clearCanvas(spectrogramCanvas, spectrogramCtx, PLOT_BACKGROUND);
   spectrogramX = 0;
   spectrogramPixelCarry = 0;
   drawTimeAxis(spectrogramCanvas, spectrogramCtx);
 }
 
+function handleAnalysisChange() {
+  configureAnalysis();
+  clearSpectrogram();
+}
+
 fftSizeSelect.addEventListener("change", handleAnalysisChange);
 windowFunctionSelect.addEventListener("change", handleAnalysisChange);
+
+spectrogramModeSelect.addEventListener("change", () => {
+  spectrogramMode = spectrogramModeSelect.value;
+  analysisQueueLength = 0;
+  updateLabels();
+  clearSpectrogram();
+});
 
 frequencyRangeSelect.addEventListener("change", () => {
   maxFrequency = Number(frequencyRangeSelect.value);
   updateLabels();
-  clearCanvas(spectrogramCanvas, spectrogramCtx, PLOT_BACKGROUND);
-  spectrogramX = 0;
-  spectrogramPixelCarry = 0;
-  drawTimeAxis(spectrogramCanvas, spectrogramCtx);
+  clearSpectrogram();
 });
 
 inputGainSlider.addEventListener("input", updateInputGain);
 
 dbFloorSlider.addEventListener("input", () => {
   dbFloor = Number(dbFloorSlider.value);
-  dbFloorValue.textContent = `${dbFloor} dB`;
+  updateLabels();
 });
 
 window.addEventListener("resize", () => {

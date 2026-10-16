@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Live Power Spectrogram</title>
+    <title>Live spectrogram</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -11,7 +11,7 @@
       <header class="topbar">
         <div>
           <p class="eyebrow">Local microphone analyzer</p>
-          <h1>Live Power Spectrogram</h1>
+          <h1>Live spectrogram</h1>
         </div>
         <div class="status-pill" id="statusPill">
           <span class="status-dot" id="statusDot"></span>
@@ -66,7 +66,7 @@
           <strong id="inputGainValue">0 dB</strong>
         </label>
 
-        <label class="control-field wide">
+        <label class="control-field wide" title="dB floor for the power spectrogram">
           <span>Floor</span>
           <input id="dbFloorSlider" type="range" min="-120" max="-45" value="-95" step="1" />
           <strong id="dbFloorValue">-95 dB</strong>
@@ -114,9 +114,27 @@
         </article>
 
         <article class="visual-panel spectrogram-panel">
-          <div class="panel-head">
-            <h2>Power spectrogram</h2>
+          <div class="panel-head spectrogram-head">
+            <div class="spectrogram-heading">
+              <h2 id="spectrogramTitle">Power spectrogram</h2>
+              <label class="control-field">
+                <span>Display</span>
+                <select id="spectrogramModeSelect">
+                  <option value="power" selected>Power</option>
+                  <option value="phase">Phase</option>
+                </select>
+              </label>
+            </div>
             <span id="spectrogramCaption">Hamming, 4096 FFT, 0-4 kHz</span>
+          </div>
+          <div class="spectrogram-scale">
+            <span id="colorScaleLabel">Power (dB)</span>
+            <div class="color-scale">
+              <canvas id="colorScaleCanvas" width="256" height="12" role="img" aria-label="Power color scale"></canvas>
+              <div id="colorScaleTicks" class="color-scale-ticks">
+                <span>-95</span><span>-71.3</span><span>-47.5</span><span>-23.8</span><span>0</span>
+              </div>
+            </div>
           </div>
           <div class="spectrogram-layout">
             <div class="frequency-axis" aria-hidden="true">

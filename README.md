@@ -1,9 +1,9 @@
-# Live Power Spectrogram / リアルタイム・パワースペクトログラム表示アプリ
+# Live spectrogram / リアルタイム・スペクトログラム表示アプリ
 
 ## 概要
 
-**Live Power Spectrogram** は，ブラウザ上で動作するリアルタイム音声解析アプリです。
-PCのマイク入力を使って，入力音声の時間波形とパワースペクトログラムをリアルタイムに表示できます。
+**Live spectrogram** は，ブラウザ上で動作するリアルタイム音声解析アプリです。
+PCのマイク入力を使って，入力音声の時間波形と，パワーまたは位相のスペクトログラムをリアルタイムに表示できます。
 
 音の大きさ，周波数成分，時間変化を視覚的に確認できるため，音響信号処理，音響工学，音声・音楽信号解析の教育デモに利用できます。
 特に，音の高さと周波数の関係，母音や楽器音のスペクトル構造，時間周波数解析，FFT，窓関数，スペクトログラムの理解に役立ちます。
@@ -21,7 +21,8 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 * マイク入力によるリアルタイム音声解析
 * 入力ゲインの調整（−30〜+40 dB，1 dB刻み）
 * 時間波形のリアルタイム表示
-* パワースペクトログラムのリアルタイム表示
+* パワー／位相スペクトログラムのリアルタイム表示と切り替え
+* 位相を0〜2π radの循環カラーマップで表示（0と2πは同じ色）
 * 入力レベルの表示
 * ピーク周波数の表示
 * サンプルレートの表示
@@ -44,7 +45,7 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
   * 0–12 kHz
   * 0–16 kHz
   * 0–20 kHz
-* スペクトログラムのdB表示下限値の調整
+* パワースペクトログラムのdB表示下限値の調整
 * 窓関数の切り替え：矩形窓，Hann窓，Hamming窓（デフォルト），Kaiser窓（β=8.6），Blackman窓
 * 12秒間のスクロール表示
 * ブラウザだけで動作する軽量な実装
@@ -68,9 +69,13 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 3. ブラウザからマイク使用の許可を求められた場合は，使用を許可します。
 4. マイクに向かって声を出したり，楽器音や環境音を入力したりします。
 5. 上段の波形表示で，音圧波形の時間変化を確認します。
-6. 下段のパワースペクトログラムで，周波数成分の時間変化を確認します。
+6. 下段の `Display` で `Power` または `Phase` を選び，周波数成分のパワーまたは位相の時間変化を確認します。
 7. 必要に応じて，`Gain`（入力ゲイン），FFTサイズ，`Window`（窓関数），表示周波数範囲，dB床値を調整します。
 8. `Stop` でマイク入力を停止し，`Reset` で表示をリセットできます。
+
+`Display` の初期値はPowerです。Phaseでは，各解析フレームのFFTの偏角を0〜2π radに変換し，0と2πが同じ色になる循環カラーマップと凡例で表示します。
+位相表示にdB床値は使用せず，`Floor` は無効になります。Powerに戻すと元の床値が復元されます。録音中の切り替えではスペクトログラムだけをクリアし，波形と経過時間は継続します。
+振幅が厳密に0の周波数ビンでは位相が定義できないため背景色で表示します。振幅が小さい成分の位相はノイズの影響を受けやすくなります。
 
 `Gain` の初期値は0 dB（変更なし）です。感度の弱いマイクは正の値でブーストし，大きすぎる入力は負の値でカットできます。
 例えば，+20 dBで振幅は10倍，−20 dBで1/10になります。録音中も変更でき，変更後の波形・スペクトログラム・入力レベルに反映されます。
@@ -164,12 +169,12 @@ LivePowerSpectrogram/
 
 ---
 
-# Live Power Spectrogram
+# Live spectrogram
 
 ## Overview
 
-**Live Power Spectrogram** is a browser-based real-time audio analysis application.
-It visualizes the time-domain waveform and power spectrogram of microphone input in real time.
+**Live spectrogram** is a browser-based real-time audio analysis application.
+It visualizes the time-domain waveform and either the power or phase spectrogram of microphone input in real time.
 
 The application is useful for observing sound level, frequency components, and time-varying spectral structures.
 It is intended for educational demonstrations in acoustic signal processing, acoustics, speech analysis, and music signal analysis.
@@ -189,7 +194,8 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 * Real-time audio analysis using microphone input
 * Adjustable input gain (−30 to +40 dB in 1 dB steps)
 * Real-time waveform display
-* Real-time power spectrogram display
+* Switchable real-time power and phase spectrograms
+* Phase shown on a cyclic 0–2π rad color scale, with the same color at 0 and 2π
 * Input level display
 * Peak frequency display
 * Sample rate display
@@ -212,7 +218,7 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
   * 0–12 kHz
   * 0–16 kHz
   * 0–20 kHz
-* Adjustable dB floor for spectrogram visualization
+* Adjustable dB floor for power spectrogram visualization
 * Selectable windows: Rectangular, Hann, Hamming (default), Kaiser (β=8.6), and Blackman
 * 12-second scrolling timeline
 * Lightweight browser-only implementation
@@ -236,9 +242,13 @@ https://d-kitamura.github.io/LivePowerSpectrogram/
 3. Allow microphone access when prompted by the browser.
 4. Speak, sing, play an instrument, or input environmental sound into the microphone.
 5. Observe the time-domain waveform in the upper display.
-6. Observe the time-varying frequency components in the power spectrogram.
+6. Choose `Power` or `Phase` in the lower panel's `Display` control to observe changes in spectral power or phase over time.
 7. Adjust `Gain` (input gain), FFT size, `Window` (window function), frequency range, and dB floor as needed.
 8. Press `Stop` to stop microphone input, and `Reset` to clear the display.
+
+`Display` defaults to Power. Phase maps each analysis frame's FFT argument to 0–2π rad and uses a cyclic color map and legend with matching colors at 0 and 2π.
+Phase does not use a dB floor, so `Floor` is disabled in this mode. Switching back to Power restores the previous floor setting. Switching while recording clears only the spectrogram; the waveform and elapsed time continue.
+Bins with exactly zero magnitude have undefined phase and are shown in the background color. Phase in low-amplitude components is more sensitive to noise.
 
 `Gain` defaults to 0 dB (unchanged). Use positive values to boost a quiet microphone and negative values to cut a loud input.
 For example, +20 dB multiplies the amplitude by 10, while −20 dB divides it by 10. Changes can be made while recording and apply to subsequent waveform, spectrogram, and input-level updates.
